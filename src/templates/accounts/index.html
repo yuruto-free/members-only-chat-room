@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    {% if user.is_authenticated  %}
+    <div class="col-12">
+        <div class="row">
+            <h2 class="h2">{{ user|stringformat:"s" }}, welcome!</h2>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card-columns">
+                    <div class="card">
+                        <div class="card-header">Chat</div>
+                        <div class="card-body">
+                            <a href="{% url 'chat:index' %}" class="btn btn-link btn-block" target="_self">
+                                Chat
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="row">
+            <div class="col-12">
+                <h5 class="h5">Plese login from the link above.</h5>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
