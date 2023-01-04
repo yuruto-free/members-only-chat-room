@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="card">
+        <div class="card-body">
+            <form action="{% url 'accounts:login' %}" method="POST">
+                <div class="row">
+                    <div class="col-12">
+                    {{ form.non_field_errors }}
+                    {% for field in form %}
+                        {{ field.label }}
+                        {{ field }}
+                        {{ field.errors }}
+                        <hr>
+                    {% endfor %}
+                    {% csrf_token %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                        <button type="submit" class="btn btn-primary btn-block">Login</button>
+                        <input type="hidden" name="next" value="{{ next }}" />
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                        <a href="{% url 'accounts:index' %}" class="btn btn-secondary btn-block">Back</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

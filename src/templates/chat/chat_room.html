@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12">
+        <div class="row">
+            <div class="col-12 col-md-10">
+                <h3 class="h3">Chat Room -{{ room|stringformat:"s" }}-</h3>
+            </div>
+            <div class="col-12 col-md-2">
+                <a href="{% url 'chat:index' %}" class="btn btn-outline-secondary btn-block">Back</a>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <textarea placeholder="Enter the message" id="chat-message-input" rows="5" class="form-control" style="resize: none;"></textarea>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-12">
+                <button type="submit" id="submit-chat-message" class="btn btn-primary btn-block">Send (Ctrl + Enter)</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row justify-content-center mt-3">
+    <div class="col-12">
+        <div id="chat-log">
+            {% for message in room.messages.ordering %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <span class="card-username">{{ message.owner|stringformat:"s" }}</span>
+                            <time class="card-datetime" datetime="{{ message.created_at|date:'Y-m-d' }}">(created at {{ message.created_at|date:'Y-m-d H:i:s' }})</time>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 card-content">
+                            {{ message.content|linebreaksbr }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<template id="card-template">
+    <div class="card">
+        <div class="card-body card-font">
+            <div class="row">
+                <div class="col-12">
+                    <span class="card-username"></span>
+                    <time class="card-datetime" datetime=""></time>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 card-content"></div>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block bodyjs %}
+<script>
+(function() {
+    let g_socket = undefined;
+
+    // setup message
+    const chatMessageInput = document.querySelector('#chat-message-input');
+    const submitChatMessage = document.querySelector('#submit-chat-message');
+    submitChatMessage.addEventListener('click', (event) => {
+        const message = chatMessageInput.value.trim();
+
+        if (g_socket && message && message.match(/\S/g)) {
+            const data = {
+                content: message,
+            };
+            g_socket.send(JSON.stringify(data));
+            chatMessageInput.value = '';
+        }
+    });
+
+    chatMessageInput.focus();
+    chatMessageInput.addEventListener('keyup', (event) => {
+        // Check Ctrl key and Enter key
+        if (event.ctrlKey && (event.key === 'Enter')) {
+            submitChatMessage.click();
+        }
+    });
+
+    // initialization
+    const init = () => {
+        // create websocket
+        const wsScheme = (window.location.protocol === 'https:' ? 'wss' : 'ws');
+        const hostname = window.location.host;
+        const roomID = '{{ room.pk }}';
+        const url = `${wsScheme}://${hostname}/ws/chat/${roomID}`;
+        g_socket = new WebSocket(url);
+
+        // message received
+        g_socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const template = document.querySelector('#card-template');
+            const node = template.content.cloneNode(true);
+            const isSystem = (data.type !== 'user_message');
+            const fontColor = isSystem ? 'red' : 'black';
+            // setup target node
+            node.querySelector('.card-font').style.color = fontColor;
+            node.querySelector('.card-username').textContent = data.username;
+            node.querySelector('.card-datetime').textContent = data.datetime;
+            node.querySelector('.card-datetime').setAttribute('datetime', data.datetime);
+            node.querySelector('.card-content').textContent = data.content;
+            document.querySelector('#chat-log').appendChild(node);
+        };
+        g_socket.onerror = (event) => {
+            console.log(event);
+        };
+        g_socket.onclose = (event) => {
+            ;
+        };
+    };
+
+    document.addEventListener('DOMContentLoaded', init);
+}());
+</script>
+{% endblock %}

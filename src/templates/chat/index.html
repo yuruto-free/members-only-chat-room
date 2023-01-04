@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Filtering</h5>
+                <form action="", method="GET">
+                    <div class="form-group row">
+                        <div class="col-12">
+                            {{ search_form.keywords }}
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                            <button type="submit" class="btn btn-primary btn-block">Search</button>
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6">
+                            <a href="{% url 'chat:index' %}" class="btn btn-secondary btn-block">Output all</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row justify-content-center">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Create room</h5>
+                <div class="row">
+                    <div class="col-12">
+                        <a href="{% url 'chat:create_room' %}" class="btn btn-success btn-block">Create</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row justify-content-center mt-3">
+    <div class="col-12">
+        <section>
+        {% for room in rooms %}
+            <article>
+                <div class="row">
+                    <div class="col-8">
+                        <h4 class="h4 mt-1"><a href="{% url 'chat:enter_room' room.pk %}">{{ room.name }}</a></h4>
+                        <p>{{ room.description }}</p>
+                        <div>
+                            <span>{{ room.host|stringformat:"s" }}</span>
+                            <time datetime="{{ room.created_at|date:'Y-m-d' }}">(created at {{ room.created_at|naturaltime }})</time>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                    {% if room.host.pk == user.pk %}
+                        <div class="dropdown mt-2">
+                            <a class="btn btn-outline-secondary btn-block dropdown-toggle" href="#" role="button" 
+                               id="dropdownMenuLink{{ forloop.counter }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                               Control
+                            </a>
+
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink{{ forloop.counter }}">
+                                <a href="{% url 'chat:update_room' room.pk %}" class="dropdown-item">Update</a>
+                                <div class="dropdown-divider"></div>
+                                <button type="button" class="dropdown-item delete-room-modal-button" 
+                                        data-deleteurl="{% url 'chat:delete_room' room.pk %}">
+                                    <span style="color: red">Delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+                    </div>
+                </div>
+            </article>
+        {% empty %}
+            <article>
+                <p>No rooms exists.</p>
+            </article>
+        {% endfor %}
+        </section>
+    </div>
+</div>
+{% if rooms %}
+<div class="row justify-content-center">
+    <div class="col-12">
+{% include "pagination.html" %}
+    </div>
+</div>
+{% endif %}
+
+{# define modal #}
+<div class="modal" tabindex="-1" role="dialog" id="room-modal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmation of deletion</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>May I really delete this room ?</p>
+            </div>
+            <div class="modal-footer">
+                <form action="" method="POST" id="delete-room-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Accept</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block bodyjs %}
+<script>
+(function() {
+    const deleteRoomForm = document.querySelector('#delete-room-form');
+    const deleteRoomModalButtons = document.querySelectorAll('.delete-room-modal-button');
+
+    deleteRoomModalButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            deleteRoomForm.action = button.dataset.deleteurl;
+
+            $('#room-modal').modal({
+                backdrop: true,
+                keyboard: true,
+            });
+        });
+    });
+}());
+</script>
+{% endblock %}
