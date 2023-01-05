@@ -14,7 +14,7 @@ class Index(LoginRequiredMixin, ListView):
         form = forms.SearchForm(self.request.GET or None)
         keywords = form.get_keywords()
 
-        return queryset.filtering(keywords=keywords)
+        return queryset.filtering(user=self.request.user, keywords=keywords)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -55,7 +55,15 @@ class DeleteRoom(LoginRequiredMixin, OnlyRoomHostMixin, DeleteView):
         # ignore direct access
         return self.handle_no_permission()
 
-class EnterRoom(LoginRequiredMixin, DetailView):
+class OnlyAssignedUserMixin(UserPassesTestMixin):
+    raise_exception = True
+
+    def test_func(self):
+        room = self.get_object()
+
+        return room.is_assigned(self.request.user)
+
+class EnterRoom(LoginRequiredMixin, OnlyAssignedUserMixin, DetailView):
     model = models.Room
     template_name = 'chat/chat_room.html'
     context_object_name = 'room'

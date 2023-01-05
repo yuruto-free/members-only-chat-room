@@ -24,6 +24,7 @@
 1. Run the following command.
 
     ```bash
+    cd src
     # migrate
     pipenv run python3 manage.py makemigrations
     pipenv run python3 manage.py migrate
@@ -35,5 +36,6 @@
 Execute the following command, then access the `http://localhost:8000`.
 
 ```bash
+cd src
 pipenv run daphne -b 0.0.0.0 -p 8000 config.asgi:application
 ```
