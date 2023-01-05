@@ -29,10 +29,12 @@ class _BaseConsumer(AsyncJsonWebsocketConsumer):
             pk = int(self.scope['url_route']['kwargs']['room_id'])
             self.room = await database_sync_to_async(models.Room.objects.get)(pk=pk)
             self.group_name = f'{self.prefix}{pk}'
+            is_assigned = await database_sync_to_async(self.room.is_assigned)(user)
 
-            await self.accept()
-            await self.channel_layer.group_add(self.group_name, self.channel_name)
-            await self.post_accept(user)
+            if is_assigned:
+                await self.accept()
+                await self.channel_layer.group_add(self.group_name, self.channel_name)
+                await self.post_accept(user)
 
         except Exception as err:
             raise Exception(err)

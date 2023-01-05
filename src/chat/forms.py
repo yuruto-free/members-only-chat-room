@@ -26,7 +26,7 @@ class SearchForm(forms.Form):
 class RoomForm(forms.ModelForm):
     class Meta:
         model = models.Room
-        fields = ('name', 'description')
+        fields = ('name', 'description', 'participants')
         widgets = {
             'name': forms.TextInput(attrs={
                 'placeholder': gettext_lazy('Enter the room name.'),
@@ -39,4 +39,11 @@ class RoomForm(forms.ModelForm):
                 'placeholder': gettext_lazy('Enter the description.'),
                 'class': 'form-control',
             }),
+            'participants': forms.SelectMultiple(attrs={
+                'class': 'form-control',
+            }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['participants'].queryset = User.objects.filter(is_staff=False)
